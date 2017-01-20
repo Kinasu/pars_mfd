@@ -1,5 +1,6 @@
 require 'open-uri'
 require 'nokogiri'
+require 'date'
 
 links = []
 bodys = []
@@ -35,8 +36,18 @@ file = File.new("data/#{company}.txt", "a:UTF-8")
 links.each do |news|
   news = Nokogiri::HTML(open(news))
   date = news.css('.mfd-content-container').css('.mfd-content-datetime').css('.mfd-content-time').text
+    if date == ("сегодня")
+      date = current_date
+    elsif date == ("вчера")
+      date = Date.today.prev_day.strftime('%d.%m.%Y').to_s
+    end
+
+
   head = news.css('.mfd-content-container').css('.mfd-content-title').text
-  body = news.css('.mfd-content-container').css('div.m-content:nth-child(4)').text.gsub(/[А-Я]+\,\s\d+\s\W+\.\s/, "").gsub(/\s\s+/, "\r")
+
+   body = news.css('.mfd-content-container').css('div.m-content:nth-child(4)').text
+   body = body.gsub(/[А-Я]+\,\s\d+\s\W+\.\s/, "").gsub(/\S+,\s\d+\S+.+\s\/\S+\,\s\S+.\//, "")
+   body = body.gsub(/\s\s+/, "\r").gsub(del_var, "\r\n\r\n")
   #to do сегодня вчера и при перепечатке.. заменить
   file.puts date
   file.puts head
@@ -48,8 +59,6 @@ if File.exist? ("data/#{company}.txt")
   file = File.open("data/#{company}.txt", "r:UTF-8")
   @filelines = file.readlines
   File.delete("data/#{company}.txt")
-  # file.close
-  # @filelines.map! {|s| s.gsub("\r\n", "")}
 else
   puts "Файл не найден"
 end
